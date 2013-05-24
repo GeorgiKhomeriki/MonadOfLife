@@ -1,5 +1,6 @@
 module Main where 
 import System.Environment
+import System.Random
 
 data Cell = Alive | Dead
 	deriving Eq
@@ -17,12 +18,15 @@ loop :: World -> IO ()
 loop w = showWorld w >> getChar >> loop (evolve w)
 
 initWorld :: Int -> Int -> World
-initWorld w h = World w h [initCell (width * height) | width <- [1..w], height <- [1..h]]
+initWorld w h = World w h [initCell | width <- [1..w], height <- [1..h]]
 
-initCell :: Int -> Cell
-initCell n
-	| mod n 2 == 0 = Alive
-	| otherwise = Dead
+initCell :: IO Cell
+initCell = do
+	r <- (randomRIO(0, 1) :: IO Int)
+	if r == 0 then
+		return Alive
+	else
+		return Dead
 
 countNeighbours :: Int -> Int -> World -> Int
 countNeighbours x y w = length (filter (Alive==) [getCell i j w | i <- xs, j <- ys, i /= x || j /= y])
