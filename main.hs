@@ -1,8 +1,20 @@
+module Main where 
+import System.Environment
+
 data Cell = Alive | Dead
-	deriving (Show, Eq)
+	deriving Eq
 
 data World = World Int Int [Cell]
-	deriving Show
+
+instance Show Cell where
+	show Alive = "O"
+	show Dead = " "
+
+main :: IO ()
+main = loop (initWorld 30 30)
+
+loop :: World -> IO ()
+loop w = showWorld w >> getChar >> loop (evolve w)
 
 initWorld :: Int -> Int -> World
 initWorld w h = World w h [initCell (width * height) | width <- [1..w], height <- [1..h]]
@@ -45,4 +57,8 @@ isAlive x y w = case c of
 	where c = getCell x y w
 
 showWorld :: World -> IO ()
-showWorld (World w h cs) = undefined
+showWorld (World _ _ []) = return ()
+showWorld (World w h cs) = do
+	putStrLn (concatMap show (take w cs))
+	showWorld (World w h (drop w cs))
+
