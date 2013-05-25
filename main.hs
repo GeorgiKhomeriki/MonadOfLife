@@ -4,7 +4,7 @@ import System.Random
 import Control.Monad
 
 data Cell = Alive | Dead
-	deriving (Eq, Enum)
+	deriving Eq
 
 data World = World Int Int [Cell]
 
@@ -33,19 +33,6 @@ initCell = do
 	r <- randomRIO(0, 1) :: IO Int
 	return (if r == 0 then Alive else Dead)
 
-countNeighbours :: Int -> Int -> World -> Int
-countNeighbours x y w = length (filter (True==) (map (\(i, j) -> isAlive i j w) ls))
-	where
-	ls = [(i, j) | i <- [x-1..x+1], j <- [y-1..y+1], i /= x || j /= y ] -- (i-x) + (j-y) /= 0]
-
-getCell :: Int -> Int -> World -> Cell
-getCell x y (World w h cs)
-	| isInside x y w h = cs !! (y * w + x)
-	| otherwise = Dead
-
-isInside :: Int -> Int -> Int -> Int -> Bool
-isInside x y w h = x >= 0 && y >= 0 && x < w && y < h 
-
 evolve :: World -> World
 evolve (World w h cs) = World w h [evolveCell x y (World w h cs) | y <- ys, x <- xs]
 	where
@@ -58,11 +45,23 @@ evolveCell x y w
 	| otherwise = Dead
 	where n = countNeighbours x y w
 
+countNeighbours :: Int -> Int -> World -> Int
+countNeighbours x y w = length (filter (True==) (map (\(i, j) -> isAlive i j w) ls))
+	where
+	ls = [(i, j) | i <- [x-1..x+1], j <- [y-1..y+1], i /= x || j /= y ]
+
 isAlive :: Int -> Int -> World -> Bool
 isAlive x y w = case c of
 	Alive -> True
 	Dead -> False
 	where c = getCell x y w
+
+getCell :: Int -> Int -> World -> Cell
+getCell x y (World w h cs)
+	| isInside x y w h = cs !! (y * w + x)
+	| otherwise = Dead
+	where 
+	isInside x y w h = x >= 0 && y >= 0 && x < w && y < h
 
 showWorld :: World -> IO ()
 showWorld (World _ _ []) = return ()
