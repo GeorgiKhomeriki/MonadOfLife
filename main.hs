@@ -2,6 +2,7 @@ module Main where
 import System.Environment
 import System.Random
 import System.Console.ANSI
+import System.Timeout
 import Control.Monad
 
 data Cell = Alive | Dead
@@ -14,15 +15,16 @@ instance Show Cell where
 	show Dead = " "
 
 main :: IO ()
-main = hideCursor >> cls >> loop (initWorld 30 30)
+main = hideCursor >> setSGR [SetColor Foreground Vivid Cyan] >> cls >> loop (initWorld 30 30)
 
 loop :: IO World -> IO ()
 loop world = do
 	w <- world
 	showWorld w
-	c <- getChar
-	cls
-	unless (c == 'q') $ loop (return (evolve w))
+	input <- timeout 50000 getChar
+	case input of
+		Just i -> setSGR [] >> showCursor
+		Nothing -> cls >> loop (return (evolve w))
 
 cls :: IO ()
 cls = clearScreen >> setCursorPosition 0 0
@@ -51,8 +53,7 @@ evolveCell x y w
 
 countNeighbours :: Int -> Int -> World -> Int
 countNeighbours x y w = length (filter (True==) (map (\(i, j) -> isAlive i j w) ls))
-	where
-	ls = [(i, j) | i <- [x-1..x+1], j <- [y-1..y+1], i /= x || j /= y ]
+	where ls = [(i, j) | i <- [x-1..x+1], j <- [y-1..y+1], i /= x || j /= y ]
 
 isAlive :: Int -> Int -> World -> Bool
 isAlive x y w = case c of
@@ -64,8 +65,7 @@ getCell :: Int -> Int -> World -> Cell
 getCell x y (World w h cs)
 	| isInside x y w h = cs !! (y * w + x)
 	| otherwise = Dead
-	where 
-	isInside x y w h = x >= 0 && y >= 0 && x < w && y < h
+	where isInside x y w h = x >= 0 && y >= 0 && x < w && y < h
 
 showWorld :: World -> IO ()
 showWorld (World _ _ []) = return ()
