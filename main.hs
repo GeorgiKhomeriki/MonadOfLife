@@ -3,6 +3,7 @@ import System.Environment
 import System.Random
 import System.Console.ANSI
 import System.Timeout
+import System.IO
 import Control.Monad
 
 data Cell = Alive | Dead
@@ -15,7 +16,11 @@ instance Show Cell where
 	show Dead = " "
 
 main :: IO ()
-main = hideCursor >> setSGR [SetColor Foreground Vivid Cyan] >> cls >> loop (initWorld 30 30)
+main = do hSetBuffering stdin NoBuffering
+	  hideCursor
+	  setSGR [SetColor Foreground Vivid Cyan]
+	  cls
+	  loop (initWorld 30 30)
 
 loop :: IO World -> IO ()
 loop world = do
@@ -23,8 +28,11 @@ loop world = do
 	showWorld w
 	input <- timeout 50000 getChar
 	case input of
-		Just i -> setSGR [] >> showCursor
-		Nothing -> cls >> loop (return (evolve w))
+		Just i | i == 'q' -> setSGR [] >> showCursor
+		       | i == 'r' -> initWorld 30 30 >>= step
+		       | otherwise -> step w
+		Nothing -> step w
+	where step w = cls >> loop (return (evolve w))
 
 cls :: IO ()
 cls = clearScreen >> setCursorPosition 0 0
