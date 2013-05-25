@@ -1,6 +1,7 @@
 module Main where 
 import System.Environment
 import System.Random
+import System.Console.ANSI
 import Control.Monad
 
 data Cell = Alive | Dead
@@ -13,15 +14,18 @@ instance Show Cell where
 	show Dead = " "
 
 main :: IO ()
-main = loop (initWorld 30 30)
+main = hideCursor >> cls >> loop (initWorld 30 30)
 
 loop :: IO World -> IO ()
 loop world = do
 	w <- world
 	showWorld w
-	putStrLn (replicate 30 '-')
 	c <- getChar
+	cls
 	unless (c == 'q') $ loop (return (evolve w))
+
+cls :: IO ()
+cls = clearScreen >> setCursorPosition 0 0
 
 initWorld :: Int -> Int -> IO World
 initWorld w h = do
