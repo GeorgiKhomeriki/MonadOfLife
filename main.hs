@@ -16,26 +16,33 @@ instance Show Cell where
 	show Dead = " "
 
 main :: IO ()
-main = do hSetBuffering stdin NoBuffering
-	  hideCursor
-	  setSGR [SetColor Foreground Vivid Cyan]
-	  cls
-	  loop (initWorld 30 30)
+main = do 
+	hSetBuffering stdin NoBuffering
+	hideCursor
+	setSGR [SetColor Foreground Vivid Cyan]
+	cls
+	args <- getArgs
+	if length args < 2 then putStrLn "Usage: life width height" >> cleanup
+	else loop (initWorld (read (head args)) (read (args !! 1)))
 
 loop :: IO World -> IO ()
 loop world = do
 	w <- world
+	(World sw sh _) <- world
 	showWorld w
 	input <- timeout 50000 getChar
 	case input of
-		Just i | i == 'q' -> setSGR [] >> showCursor
-		       | i == 'r' -> initWorld 30 30 >>= step
+		Just i | i == 'q' -> cleanup
+		       | i == 'r' -> initWorld sw sh >>= step
 		       | otherwise -> step w
 		Nothing -> step w
 	where step w = cls >> loop (return (evolve w))
 
 cls :: IO ()
 cls = clearScreen >> setCursorPosition 0 0
+
+cleanup :: IO ()
+cleanup = setSGR [] >> showCursor
 
 initWorld :: Int -> Int -> IO World
 initWorld w h = do
