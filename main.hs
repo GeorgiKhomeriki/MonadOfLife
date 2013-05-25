@@ -1,9 +1,10 @@
 module Main where 
 import System.Environment
 import System.Random
+import Control.Monad
 
 data Cell = Alive | Dead
-	deriving Eq
+	deriving (Eq, Enum)
 
 data World = World Int Int [Cell]
 
@@ -12,24 +13,29 @@ instance Show Cell where
 	show Dead = " "
 
 main :: IO ()
-main = loop (initWorld 30 30)
+main = loop (initWorld 60 60)
 
-loop :: World -> IO ()
-loop w = showWorld w >> getChar >> loop (evolve w)
+loop :: IO World -> IO ()
+loop world = do
+	w <- world
+	showWorld w
+	putStrLn (replicate 60 '-')
+	c <- getChar
+	if c == 'q' then return ()
+	else loop (return (evolve w))
 
-initWorld :: Int -> Int -> World
-initWorld w h = World w h [initCell | width <- [1..w], height <- [1..h]]
+initWorld :: Int -> Int -> IO World
+initWorld w h = do
+	cells <- replicateM (w*h) initCell
+	return (World w h cells)
 
 initCell :: IO Cell
 initCell = do
-	r <- (randomRIO(0, 1) :: IO Int)
-	if r == 0 then
-		return Alive
-	else
-		return Dead
+	r <- randomRIO(0, 1) :: IO Int
+	return (if r == 0 then Alive else Dead)
 
 countNeighbours :: Int -> Int -> World -> Int
-countNeighbours x y w = length (filter (Alive==) [getCell i j w | i <- xs, j <- ys, i /= x || j /= y])
+countNeighbours x y w = length (filter (Alive==) [getCell i j w | i <- xs, j <- ys, i /= x && j /= y])
 	where
 	xs = [x-1..x+1]
 	ys = [y-1..y+1]
@@ -43,7 +49,7 @@ isInside :: Int -> Int -> Int -> Int -> Bool
 isInside x y w h = x >= 0 && y >= 0 && x < w && y < h 
 
 evolve :: World -> World
-evolve (World w h cs) = World w h [evolveCell x y (World w h cs) | x <- xs, y <- ys]
+evolve (World w h cs) = World w h [evolveCell x y (World w h cs) | y <- ys, x <- xs]
 	where
 	xs = [0..w-1]
 	ys = [0..h-1]
