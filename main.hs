@@ -13,16 +13,15 @@ instance Show Cell where
 	show Dead = " "
 
 main :: IO ()
-main = loop (initWorld 60 60)
+main = loop (initWorld 30 30)
 
 loop :: IO World -> IO ()
 loop world = do
 	w <- world
 	showWorld w
-	putStrLn (replicate 60 '-')
+	putStrLn (replicate 30 '-')
 	c <- getChar
-	if c == 'q' then return ()
-	else loop (return (evolve w))
+	unless (c == 'q') $ loop (return (evolve w))
 
 initWorld :: Int -> Int -> IO World
 initWorld w h = do
@@ -35,10 +34,9 @@ initCell = do
 	return (if r == 0 then Alive else Dead)
 
 countNeighbours :: Int -> Int -> World -> Int
-countNeighbours x y w = length (filter (Alive==) [getCell i j w | i <- xs, j <- ys, i /= x && j /= y])
+countNeighbours x y w = length (filter (True==) (map (\(i, j) -> isAlive i j w) ls))
 	where
-	xs = [x-1..x+1]
-	ys = [y-1..y+1]
+	ls = [(i, j) | i <- [x-1..x+1], j <- [y-1..y+1], i /= x || j /= y ] -- (i-x) + (j-y) /= 0]
 
 getCell :: Int -> Int -> World -> Cell
 getCell x y (World w h cs)
