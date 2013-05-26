@@ -1,4 +1,4 @@
-module Life where 
+module Main where 
 import System.Environment
 import System.Random
 import System.Console.ANSI
