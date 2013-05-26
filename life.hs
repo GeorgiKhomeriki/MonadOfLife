@@ -1,10 +1,11 @@
-module Main where 
+module Life where 
 import System.Environment
 import System.Random
 import System.Console.ANSI
 import System.Timeout
 import System.IO
 import Control.Monad
+import Control.DeepSeq
 
 data Cell = Alive | Dead
 	deriving Eq
@@ -83,10 +84,12 @@ getCell x y (World w h cs)
 	where isInside x y w h = x >= 0 && y >= 0 && x < w && y < h
 
 showWorld :: World -> IO ()
-showWorld (World _ _ []) = return ()
-showWorld (World w h cs) = do
-	putStrLn (concatMap show (take w cs))
-	showWorld (World w h (drop w cs))
+showWorld w = putStrLn $!! readWorld w
+
+readWorld :: World -> String
+readWorld (World _ _ []) = []
+readWorld (World w h cs) = concatMap show (take w cs) 
+	++ "\n" ++ readWorld (World w h (drop w cs))
 
 showInfo :: [Cell] -> IO ()
 showInfo cs = putStrLn ("(q - quit)     (r - reset)     live cells: " 
