@@ -17,22 +17,25 @@ instance Show Cell where
 
 main :: IO ()
 main = do 
-	hSetBuffering stdin NoBuffering
-	hideCursor
-	setSGR [SetColor Foreground Vivid Cyan]
-	cls
 	args <- getArgs
-	if length args < 2 then putStrLn "Usage: life width height" >> cleanup
-	else loop (initWorld (read (head args)) (read (args !! 1)))
+	if length args /= 2 then putStrLn "Usage: life width height"
+	else do 
+		hSetBuffering stdin NoBuffering
+		hideCursor
+		cls
+		loop (initWorld (read (head args)) (read (args !! 1)))
 
 loop :: IO World -> IO ()
 loop world = do
 	w <- world
-	(World sw sh _) <- world
+	(World sw sh cs) <- world
+	setSGR [SetColor Foreground Vivid Cyan]
 	showWorld w
+	setSGR []
+	showInfo cs
 	input <- timeout 50000 getChar
 	case input of
-		Just i | i == 'q' -> cleanup
+		Just i | i == 'q' -> setSGR [] >> showCursor
 		       | i == 'r' -> initWorld sw sh >>= step
 		       | otherwise -> step w
 		Nothing -> step w
@@ -40,9 +43,6 @@ loop world = do
 
 cls :: IO ()
 cls = clearScreen >> setCursorPosition 0 0
-
-cleanup :: IO ()
-cleanup = setSGR [] >> showCursor
 
 initWorld :: Int -> Int -> IO World
 initWorld w h = do
@@ -88,3 +88,6 @@ showWorld (World w h cs) = do
 	putStrLn (concatMap show (take w cs))
 	showWorld (World w h (drop w cs))
 
+showInfo :: [Cell] -> IO ()
+showInfo cs = putStrLn ("(q - quit)     (r - reset)     live cells: " 
+	++ show (length (filter (Alive==) cs)))
