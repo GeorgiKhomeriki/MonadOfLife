@@ -92,5 +92,5 @@ readWorld (World w h cs) = concatMap show (take w cs)
 
 showInfo :: [Cell] -> IO ()
 showInfo cs = putStrLn ("(q - quit)     (r - reset)     live cells: " 
-    ++ show (length $ filter (Alive==) cs))
+    ++ (show . length $ filter (Alive==) cs))
 
