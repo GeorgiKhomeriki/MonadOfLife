@@ -24,7 +24,7 @@ main = do
         hSetBuffering stdin NoBuffering
         hideCursor
         cls
-        loop (initWorld (read (head args)) (read (args !! 1)))
+        loop $ initWorld (read $ head args) (read $ args !! 1)
 
 loop :: IO World -> IO ()
 loop world = do
@@ -39,7 +39,7 @@ loop world = do
                | i == 'r'  -> initWorld sw sh >>= step
                | otherwise -> step w
         Nothing -> step w
-    where step w = cls >> loop (return (evolve w))
+    where step w = cls >> loop (return $ evolve w)
 
 cls :: IO ()
 cls = clearScreen >> setCursorPosition 0 0
@@ -47,12 +47,12 @@ cls = clearScreen >> setCursorPosition 0 0
 initWorld :: Int -> Int -> IO World
 initWorld w h = do
     cells <- replicateM (w * h) initCell
-    return (World w h cells)
+    return $ World w h cells
 
 initCell :: IO Cell
 initCell = do
     r <- randomRIO(0, 1) :: IO Int
-    return (if r == 0 then Alive else Dead)
+    return $ if r == 0 then Alive else Dead
 
 evolve :: World -> World
 evolve world @ (World w h cs) = World w h [evolveCell x y world | y <- ys, x <- xs]
@@ -73,7 +73,7 @@ countNeighbours x y w = length (filter (True==) (map (\(i, j) -> isAlive i j w) 
 isAlive :: Int -> Int -> World -> Bool
 isAlive x y w = case c of
     Alive -> True
-    Dead -> False
+    Dead  -> False
     where c = getCell x y w
 
 getCell :: Int -> Int -> World -> Cell
@@ -88,9 +88,9 @@ showWorld w = putStrLn $!! readWorld w
 readWorld :: World -> String
 readWorld (World _ _ []) = []
 readWorld (World w h cs) = concatMap show (take w cs) 
-    ++ "\n" ++ readWorld (World w h (drop w cs))
+    ++ "\n" ++ readWorld (World w h $ drop w cs)
 
 showInfo :: [Cell] -> IO ()
 showInfo cs = putStrLn ("(q - quit)     (r - reset)     live cells: " 
-    ++ show (length (filter (Alive==) cs)))
+    ++ show (length $ filter (Alive==) cs))
 
