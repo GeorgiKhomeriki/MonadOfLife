@@ -67,7 +67,7 @@ evolveCell x y w
     where n = countNeighbours x y w
 
 countNeighbours :: Int -> Int -> World -> Int
-countNeighbours x y w = length $ filter (True==) (map (\(i, j) -> isAlive i j w) ls)
+countNeighbours x y w = length . filter (True==) . map (\(i, j) -> isAlive i j w) $ ls
     where ls = [(i, j) | i <- [x-1..x+1], j <- [y-1..y+1], i /= x || j /= y ]
 
 isAlive :: Int -> Int -> World -> Bool
