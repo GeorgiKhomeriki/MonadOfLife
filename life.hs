@@ -6,6 +6,7 @@ import System.Timeout
 import System.IO
 import Control.Monad
 import Control.DeepSeq
+import Control.Applicative
 
 data Cell = Alive | Dead
     deriving Eq
@@ -33,7 +34,7 @@ loop :: IO World -> IO ()
 loop world = do
     w @ (World sw sh cs) <- world
     setSGR [SetColor Foreground Vivid Cyan]
-    showWorld w
+    printWorld w
     setSGR []
     showInfo cs
     input <- timeout 50000 getChar
@@ -50,9 +51,7 @@ cls = clearScreen >> setCursorPosition 0 0
 
 -- given width and height, returns a random World
 initWorld :: Int -> Int -> IO World
-initWorld w h = do
-    cells <- replicateM (w * h) initCell
-    return $ World w h cells
+initWorld w h = World w h <$> replicateM (w * h) initCell
 
 -- returns a random Cell
 initCell :: IO Cell
@@ -81,10 +80,9 @@ countNeighbours x y w = length . filter (True==) . map (\(i, j) -> isAlive i j w
 
 -- checks whether the Cell at (x, y) is dead or alive
 isAlive :: Int -> Int -> World -> Bool
-isAlive x y w = case c of
+isAlive x y w = case getCell x y w of
     Alive -> True
     Dead  -> False
-    where c = getCell x y w
 
 -- returns the Cell that is on (x, y) in the given World
 getCell :: Int -> Int -> World -> Cell
@@ -94,14 +92,15 @@ getCell x y (World w h cs)
     where isInside = x >= 0 && y >= 0 && x < w && y < h
 
 -- display the given World
-showWorld :: World -> IO ()
-showWorld w = putStrLn $!! readWorld w
+printWorld :: World -> IO ()
+printWorld w = putStrLn $!! showWorld w
 
 -- takes a World and returns it's String representation 
-readWorld :: World -> String
-readWorld (World _ _ []) = []
-readWorld (World w h cs) = concatMap show (take w cs) 
-    ++ "\n" ++ readWorld (World w h $ drop w cs)
+showWorld :: World -> String
+showWorld (World _ _ []) = []
+showWorld (World w h cs) = concatMap show line
+    ++ "\n" ++ showWorld (World w h rest)
+    where (line, rest) = splitAt w cs
 
 -- given the list of current Cells, display's some information
 showInfo :: [Cell] -> IO ()
